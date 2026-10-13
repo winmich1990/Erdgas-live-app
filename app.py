@@ -13,12 +13,20 @@ st.title("🔥 Erdgas (Natural Gas) Chart & Signal")
 # --- ZEITRAUM UND INTERVALL WAHL ---
 timeframe = st.selectbox(
     "Zeiteinheit wählen:",
-    ("Stundenchart (1H)", "Wochenchart (1W)", "Monatschart (1M)"),
+    (
+        "15-Minuten-Chart (15m)",
+        "Stundenchart (1H)",
+        "Wochenchart (1W)",
+        "Monatschart (1M)",
+    ),
 )
 
 # Parameter je nach Auswahl festlegen
-if timeframe == "Stundenchart (1H)":
-  period = "2mo"
+if timeframe == "15-Minuten-Chart (15m)":
+  period = "30d"
+  interval = "15m"
+elif timeframe == "Stundenchart (1H)":
+  period = "59d"
   interval = "1h"
 elif timeframe == "Wochenchart (1W)":
   period = "2y"
@@ -29,7 +37,7 @@ else:  # Monatschart
 
 
 # Daten laden
-@st.cache_data(ttl=900)  # Aktualisierung alle 15 Minuten
+@st.cache_data(ttl=300)
 def load_data(p, i):
   data = yf.download("NG=F", period=p, interval=i, progress=False)
   if isinstance(data.columns, pd.MultiIndex):
@@ -42,15 +50,16 @@ with st.spinner("Lade Chartdaten..."):
 
 if df.empty or len(df) < 50:
   st.error(
-      "Nicht genügend Daten für die Berechnung geladen. Bitte später erneut"
-      " versuchen."
+      "Nicht genügend Daten für die Berechnung geladen. Bitte wähle einen"
+      " anderen Zeitraum."
   )
 else:
+  # Letzte genaue Aktualisierungszeit ermitteln
+  last_timestamp = df.index[-1].strftime("%d.%m.%Y %H:%M")
+
   # --- INDIKATOREN BERECHNEN ---
-  # 1. EMA 50 (Exponential Moving Average)
   df["EMA_50"] = df["Close"].ewm(span=50, adjust=False).mean()
 
-  # 2. RSI 14 (Relative Strength Index)
   window = 14
   delta = df["Close"].diff()
   gain = delta.where(delta > 0, 0).rolling(window=window).mean()
@@ -81,6 +90,8 @@ else:
   col1.metric("Preis (USD)", f"{current_price:.3f}")
   col2.metric("RSI (14)", f"{current_rsi:.2f}")
   col3.metric("EMA 50", f"{current_ema:.3f}")
+
+  st.caption(f"Letzter Datenpunkt: {last_timestamp}")
 
   st.markdown(
       f"""
@@ -149,10 +160,10 @@ else:
       y=30, line_dash="dash", line_color="green", row=2, col=1, opacity=0.5
   )
 
-  # Layout-Anpassung für mobile Ansicht
+  # Layout-Anpassung
   fig.update_layout(
       height=600,
-      xaxis_rangeslider_visible=False,  # Deaktiviert den unteren Zoom-Slider für bessere Übersicht auf dem Handy
+      xaxis_rangeslider_visible=False,
       margin=dict(l=10, r=10, t=30, b=10),
   )
 
