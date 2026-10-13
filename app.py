@@ -4,18 +4,15 @@ import streamlit as st
 import streamlit_authenticator as stauth
 import yfinance as yf
 
-# --- HIER DEINE ZUGANGSDATEN ANPASSEN ---
-names = ["Michi"]
+# --- ZUGANGSDATEN ---
+names = ["Dein Name"]
 usernames = ["admin"]
-passwords = ["dein_sicheres_passwort"]  # Rothenthurm
-
-# Hash-Erstellung für das Passwort
-hashed_passwords = stauth.Hasher(passwords).generate()
+passwords = ["dein_sicheres_passwort"]  # Hier dein Wunsch-Passwort eintragen
 
 authenticator = stauth.Authenticate(
     names,
     usernames,
-    hashed_passwords,
+    passwords,
     cookie_name="erdgas_app_cookie",
     key="random_signature_key",
     cookie_expiry_days=30,
@@ -29,7 +26,7 @@ if authentication_status == False:
 if authentication_status == None:
   st.warning("Bitte logge dich ein, um die App zu nutzen.")
 
-# --- HAUPTAPP (NUR NACH LOGIN SICHTBAR) ---
+# --- HAUPTAPP ---
 if authentication_status == True:
   authenticator.logout("Abmelden", "sidebar")
   st.sidebar.write(
